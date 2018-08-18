@@ -1,0 +1,105 @@
+Convolutional neural network¶
+In [ ]:
+#!pip install msgpack
+#!pip install --upgarde tensorflow
+#!pip install --upgarde keras
+In [1]:
+# Part 1 - Building the CNN
+# Importing the Keras libraries and packages
+from keras.models import Sequential #initialise our neural network model as a sequential network
+from keras.layers import Conv2D # convolution operation for 2D images ,3D for Videos
+from keras.layers import MaxPooling2D #pooling operation
+from keras.layers import Flatten #Flattening is the process of converting all the resultant 2 dimensional arrays into a single long continuous linear vector
+from keras.layers import Dense
+C:\ProgramData\Anaconda3\lib\site-packages\h5py\__init__.py:36: FutureWarning: Conversion of the second argument of issubdtype from `float` to `np.floating` is deprecated. In future, it will be treated as `np.float64 == np.dtype(float).type`.
+  from ._conv import register_converters as _register_converters
+Using TensorFlow backend.
+In [4]:
+# Initialising the CNN
+classifier = Sequential()
+
+# Step 1 - Convolution
+classifier.add(Conv2D(32, (3, 3), input_shape = (64, 64, 3), activation = 'relu'))
+In [6]:
+## Step 2 - Pooling
+classifier.add(MaxPooling2D(pool_size = (2, 2)))
+
+# Adding a second convolutional layer
+classifier.add(Conv2D(32, (3, 3), activation = 'relu'))
+classifier.add(MaxPooling2D(pool_size = (2, 2)))
+In [7]:
+# Step 3 - Flattening
+classifier.add(Flatten())
+In [8]:
+# Step 4 - Full connection
+classifier.add(Dense(units = 128, activation = 'relu'))
+classifier.add(Dense(units = 1, activation = 'sigmoid'))
+In [9]:
+#âunitsâ is where we define the number of nodes that should be present in this hidden layer
+In [10]:
+# Compiling the CNN
+classifier.compile(optimizer = 'adam', loss = 'binary_crossentropy', metrics = ['accuracy'])
+In [11]:
+#Optimizer parameter is to choose the stochastic gradient descent algorithm.
+#Loss parameter is to choose the loss function.
+#Finally, the metrics parameter is to choose the performance metric.
+In [13]:
+# Part 2 - Fitting the CNN to the images
+#https://keras.io/preprocessing/image/
+
+from keras.preprocessing.image import ImageDataGenerator
+train_datagen = ImageDataGenerator(rescale = 1./255,
+shear_range = 0.2,
+zoom_range = 0.2,
+horizontal_flip = True)
+
+test_datagen = ImageDataGenerator(rescale = 1./255)
+
+
+training_set = train_datagen.flow_from_directory('D:/sw/training/CNN_Data/training_set',
+target_size = (64, 64),
+batch_size = 32,
+class_mode = 'binary')
+
+test_set = test_datagen.flow_from_directory('D:/sw/training/CNN_Data/test_set',
+target_size = (64, 64),
+batch_size = 32,
+class_mode = 'binary')
+
+classifier.fit_generator(training_set,
+steps_per_epoch = 50,
+epochs = 5,
+validation_data = test_set,
+validation_steps = 20)
+
+# Part 3 - Making new predictions
+
+import numpy as np
+from keras.preprocessing import image
+test_image = image.load_img('D:/sw/training/CNN_Data/single_prediction/cat_or_dog_1_T.jpg', target_size = (64, 64))
+test_image = image.img_to_array(test_image)
+test_image = np.expand_dims(test_image, axis = 0)
+result = classifier.predict(test_image)
+
+training_set.class_indices
+if result[0][0] == 1:
+    prediction = 'dog'
+else:
+    prediction = 'cat'
+    
+
+prediction
+Found 81 images belonging to 2 classes.
+Found 40 images belonging to 2 classes.
+Epoch 1/5
+50/50 [==============================] - 13s 254ms/step - loss: 0.6680 - acc: 0.6010 - val_loss: 0.7046 - val_acc: 0.5000
+Epoch 2/5
+50/50 [==============================] - 12s 232ms/step - loss: 0.6096 - acc: 0.6613 - val_loss: 0.6298 - val_acc: 0.6750
+Epoch 3/5
+50/50 [==============================] - 12s 233ms/step - loss: 0.4411 - acc: 0.8152 - val_loss: 0.7142 - val_acc: 0.6250
+Epoch 4/5
+50/50 [==============================] - 12s 234ms/step - loss: 0.2796 - acc: 0.8922 - val_loss: 0.8640 - val_acc: 0.6500
+Epoch 5/5
+50/50 [==============================] - 12s 248ms/step - loss: 0.1184 - acc: 0.9704 - val_loss: 1.1174 - val_acc: 0.6250
+Out[13]:
+'dog'
